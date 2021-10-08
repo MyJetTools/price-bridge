@@ -1,7 +1,7 @@
 name: Release App
 on:
   push:
-    tags: "*"
+    branches: [ main ]
 
 env:
   IMAGE_NAME: myjettools/my-servicebus-persistence
