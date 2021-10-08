@@ -8,7 +8,9 @@ async fn main() {
 
     let settings = parse_settings().await;
 
-    let instruments = settings.instruments_mapping.values().cloned().collect::<Vec<String>>();
+    let instruments = settings.instruments_mapping.keys().cloned().collect::<Vec<String>>();
+
+
     let binance_context = BinanceExchangeContext::new(instruments);
     let mut socket = ExchangeWebscoket::new(binance_context);
 
@@ -41,11 +43,9 @@ async fn handle_event(mut rx: UnboundedReceiver<BidAsk>, server: Arc<EventTcpSer
             let new_id = id_mapping.get(&event.id);
             
             if new_id.is_none() {
-                println!("Not found id: {}", &event.id);
+                println!("Not found id: {}. ", &event.id);
                 continue;
             }
-
-            println!("{}", line.unwrap())
 
             let str = format!("{} {} {} {}", new_id.unwrap(), event.bid, event.ask, event.date);
             server.send_event_to_all_sockets(str.as_bytes().to_vec()).await
@@ -58,7 +58,7 @@ async fn handle_event(mut rx: UnboundedReceiver<BidAsk>, server: Arc<EventTcpSer
 }
 
 async fn parse_settings() -> Settings{
-    let content = fs::read_to_string("./test.json").await.unwrap();
+    let content = fs::read_to_string("./settings.json").await.unwrap();
     let parsed_json : Settings = serde_json::from_str(&content).unwrap();
     return parsed_json;
 }
