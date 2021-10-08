@@ -1,5 +1,5 @@
 use std::{collections::HashMap, sync::atomic::AtomicBool, time::Duration};
-
+use std::{net::SocketAddr};
 use super::BufferReader;
 use chrono::Utc;
 use tokio::{
@@ -130,7 +130,7 @@ impl EventTcpServer {
     }
 
     pub async fn start(&self) {
-        let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
+        let listener = TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], 8080))).await.unwrap();
         loop {
             let (socket, _) = listener.accept().await.unwrap();
             let (socker_reed, socker_write) = io::split(socket);
