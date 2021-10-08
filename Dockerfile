@@ -1,3 +1,3 @@
 FROM rust
 COPY . . 
-ENTRYPOINT ["./target/release/my-sb-persistence"]
+ENTRYPOINT ["./target/release/binance-quote-bridge"]

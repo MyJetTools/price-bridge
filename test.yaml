@@ -1,0 +1,18 @@
+version: '3'
+services:
+  binance-connector:
+    image: docker.io/myjettools/price-bridge:0.1.0
+    container_name: binance-connector
+    environment:
+      - APPINSIGHTS_INSTRUMENTATIONKEY=${APPINSIGHTS_INSTRUMENTATIONKEY}
+      - SETTINGS_URL=${SETTINGS_URL}
+      - ACCOUNT_PREFIX=${ACCOUNT_PREFIX}
+      - IS_LIVE=0
+      - ConsoleOutputLogLevel=Default
+    ports:
+      - "5525:8080"
+    volumes:
+      - ./settings.json:/settings.json
+    logging:
+        options:
+            max-size: 10m
