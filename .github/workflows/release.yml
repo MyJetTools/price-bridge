@@ -4,7 +4,7 @@ on:
     branches: [ main ]
 
 env:
-  IMAGE_NAME: myjettools/my-servicebus-persistence
+  IMAGE_NAME: myjettools/price-bridge
 
 
 jobs:
