@@ -1,8 +1,10 @@
 use std::collections::{HashMap};
-
 use crate::websocket_core::{BaseContext, BidAsk};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde_json::Value;
 use tokio_tungstenite::tungstenite::Message;
+use substring::{Substring};
+
 
 use super::{BinanceOrderBook, DepthOrderBookEvent};
 
@@ -80,7 +82,6 @@ impl BaseContext for BinanceExchangeContext {
         let book = self.orderbooks.get_mut(&socket_event.symbol).unwrap();
 
         if socket_event.final_update_id <= book.last_id {
-            println!("Miss id\nBook: {:?} \nOrderbook: {:?}", socket_event, book);
             return None;
         }
 
@@ -91,5 +92,11 @@ impl BaseContext for BinanceExchangeContext {
         return book.get_best_price();
     }
 
+    fn parse_date(timestamp: String) -> String {
 
+        let nanoseconds = timestamp.substring(10, 14).parse::<u32>().unwrap() * 1000000;
+        let timestamp = timestamp.substring(0, 10).parse::<i64>().unwrap();
+        let datetime = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, nanoseconds), Utc);
+        return datetime.format("%Y%m%d%H%M%S%3f").to_string();
+    }
 }
