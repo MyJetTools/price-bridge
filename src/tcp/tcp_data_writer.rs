@@ -1,25 +1,18 @@
-use std::sync::Arc;
-
 use tokio::{
     io::{AsyncWriteExt, WriteHalf},
     net::{TcpStream}
 };
 
-use super::sessions_list::{SessionList};
-
-
 pub struct TcpContextWriter {
     tcp_stream: Option<WriteHalf<TcpStream>>,
-    id: u128,
-    sessions_list: Arc<SessionList>
+    id: u128
 }
 
 impl TcpContextWriter {
-    pub fn new(tcp_stream: WriteHalf<TcpStream>, id: u128, list: Arc<SessionList>) -> TcpContextWriter {
+    pub fn new(tcp_stream: WriteHalf<TcpStream>, id: u128) -> TcpContextWriter {
         TcpContextWriter {
             tcp_stream: Some(tcp_stream),
-            id: id,
-            sessions_list: list
+            id: id
         }
     }
 

@@ -1,8 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-
-use crate::websocket_core::BidAsk;
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WsBidsAsks {
@@ -37,14 +33,4 @@ pub struct DepthOrderBookEvent {
 
     #[serde(rename = "a")]
     pub asks: Vec<WsBidsAsks>
-}
-
-
-pub fn order_book_event_to_bid_ask(book_event: DepthOrderBookEvent) -> BidAsk{
-    BidAsk{
-        bid: book_event.bids.first().unwrap().price.parse::<f64>().unwrap(),
-        ask: book_event.asks.first().unwrap().price.parse::<f64>().unwrap(),
-        id: book_event.symbol,
-        date: book_event.event_time,
-    }
 }

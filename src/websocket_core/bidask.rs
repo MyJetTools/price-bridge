@@ -1,5 +1,3 @@
-use chrono::{DateTime, Utc};
-
 #[derive(Debug)]
 pub struct BidAsk{
     pub bid: f64,

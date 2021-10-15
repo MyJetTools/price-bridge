@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::{contracts::WsBidsAsks, DepthOrderBookEvent};
-use crate::{BaseContext, BidAsk, BinanceExchangeContext};
+use crate::BidAsk;
 
 #[derive(Clone, Debug)]
 pub struct BinanceOrderBook {

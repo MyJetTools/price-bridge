@@ -1,21 +1,17 @@
-use std::sync::Arc;
-
 use tokio::{io::WriteHalf, net::TcpStream, sync::RwLock};
 
-use super::{TcpContextWriter, sessions_list::SessionList};
+use super::{TcpContextWriter};
 
 pub struct TcpServerSession {
-    id: u128,
-    data_writer: RwLock<TcpContextWriter>,
-    session_list: Arc<SessionList>
+    pub id: u128,
+    data_writer: RwLock<TcpContextWriter>
 }
 
 impl TcpServerSession {
-    pub fn new(id: u128, write_socket: WriteHalf<TcpStream>, list: Arc<SessionList>) -> TcpServerSession {
+    pub fn new(id: u128, write_socket: WriteHalf<TcpStream>) -> TcpServerSession {
         TcpServerSession {
             id: id,
-            data_writer: RwLock::new(TcpContextWriter::new(write_socket, id, list.clone())),
-            session_list: list
+            data_writer: RwLock::new(TcpContextWriter::new(write_socket, id))
         }
     }
 
@@ -28,7 +24,7 @@ impl TcpServerSession {
         let result = write_access.send(buff).await;
 
         if let Err(err) = result {
-            println!("error to send");
+            println!("error to send: {}", err);
             return false;
         }
 

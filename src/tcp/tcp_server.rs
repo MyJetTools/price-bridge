@@ -1,17 +1,17 @@
-use std::{net::SocketAddr, sync::Arc, time::Duration};
-use tokio::{io::{self, AsyncReadExt, AsyncWriteExt, ReadHalf, WriteHalf}, net::{TcpListener, TcpStream}, sync::RwLock};
+use std::{net::SocketAddr, sync::Arc};
+use tokio::{io::{self, AsyncReadExt, ReadHalf}, net::{TcpListener, TcpStream}};
 
+
+use crate::Metrics;
 
 use super::{TcpServerSession, buff_reader::BufferReader, connection::handle_incoming_payload, sessions_list::SessionList};
 
 pub type ConnectionId = u128;
 
-const PING: &str = "PING";
-const PONG: &str = "PONG";
 const MESSAGE_SPLITTER: [u8; 2] = [13, 10];
 
 
-pub async fn start(addr: SocketAddr, list: Arc<SessionList>) {
+pub async fn start(addr: SocketAddr, list: Arc<SessionList>, metrics: Arc<Metrics>) {
     let listener = TcpListener::bind(addr).await.unwrap();
 
     let mut socket_id: ConnectionId = 0;
@@ -27,12 +27,11 @@ pub async fn start(addr: SocketAddr, list: Arc<SessionList>) {
         let (reed_socket, write_socket) = io::split(socket);
         socket_id += 1;
 
-        let tcp_session = Arc::new(TcpServerSession::new(socket_id, write_socket, list.clone()));
+        let tcp_session = Arc::new(TcpServerSession::new(socket_id, write_socket));
         list.add_session(tcp_session.clone()).await;
-        
+        metrics.tcp_server_clients_count.with_label_values(&[&socket_id.to_string()]).inc();
 
-        tokio::task::spawn(process_socket(reed_socket, tcp_session, list.clone()));
-
+        tokio::task::spawn(process_socket(reed_socket, tcp_session, list.clone(), metrics.clone()));
     }
 }
 
@@ -40,17 +39,18 @@ pub async fn start(addr: SocketAddr, list: Arc<SessionList>) {
 async fn process_socket(
     read_socket: ReadHalf<TcpStream>,
     tcp_session: Arc<TcpServerSession>,
-    list: Arc<SessionList>
+    list: Arc<SessionList>, metrics: Arc<Metrics>
 ) {
     let socket_loop_result =
         tokio::task::spawn(socket_loop(read_socket, tcp_session.clone())).await;
 
 
     if let Err(err) = socket_loop_result {
-       println!("Disconect");
+       println!("Disconect. Error: {}", err);
     } 
 
-    list.remove_session(tcp_session.get_id()).await
+    list.remove_session(tcp_session.get_id()).await;
+    metrics.tcp_server_clients_count.with_label_values(&[&tcp_session.id.to_string()]).dec();
 }
 
 
@@ -72,9 +72,7 @@ async fn socket_loop(
             continue;
         }
 
-        handle_incoming_payload(reed_result.unwrap(), &session).await;
-
-
-
+        handle_incoming_payload(reed_result.unwrap(), &session).await.unwrap();
+        bf_reader.compress();
     }
 }

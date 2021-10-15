@@ -1,13 +1,14 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 
-use binance_quote_bridge::{BaseContext, BidAsk, BinanceExchangeContext, ExchangeWebscoket, SessionList, Settings, start};
-use chrono::{DateTime, NaiveDateTime, Utc};
+use binance_quote_bridge::{BaseContext, BidAsk, BinanceExchangeContext, ExchangeWebscoket, Metrics, SessionList, Settings, http_start, start};
+use stopwatch::Stopwatch;
 use tokio::{fs, sync::{mpsc::UnboundedReceiver}};
 
 const MESSAGE_SPLITTER: [u8; 2] = [13, 10];
 
 #[tokio::main]
 async fn main() {
+    let metrics = Arc::new(Metrics::new());
     let settings = parse_settings().await;
     let server_sessions_list = Arc::new(SessionList::new());
     let mut socket = ExchangeWebscoket::new(BinanceExchangeContext::new(
@@ -20,26 +21,22 @@ async fn main() {
 
     let handler = socket.get_subscribe();
     
-    tokio::spawn(start(SocketAddr::from(([0, 0, 0, 0], 8080)), server_sessions_list.clone()));
-    tokio::spawn(handle_event(handler, server_sessions_list.clone(), settings.instruments_mapping));
-    tokio::spawn(socket.start());
-
-    // tokio::spawn(start_tcp_server(server));
+    tokio::spawn(start(SocketAddr::from(([0, 0, 0, 0], 8080)), server_sessions_list.clone(), metrics.clone()));
+    tokio::spawn(http_start(SocketAddr::from(([0, 0, 0, 0], 8081)), metrics.clone()));
+    tokio::spawn(handle_event(handler, server_sessions_list.clone(), settings.instruments_mapping, metrics.clone()));
+    tokio::spawn(socket.start(metrics.clone()));
+    
 
     loop {
         tokio::time::sleep(Duration::from_secs(5)).await;
     }
 }
 
-
-// async fn start_tcp_server(server: Arc<EventTcpServer>) {
-//     server.start().await;
-// }
-
-async fn handle_event(mut rx: UnboundedReceiver<BidAsk>, sessions: Arc<SessionList>, id_mapping: HashMap<String, String>){
+async fn handle_event(mut rx: UnboundedReceiver<BidAsk>, sessions: Arc<SessionList>, id_mapping: HashMap<String, String>, metrics: Arc<Metrics>){    
     loop {
         let line = rx.recv().await;
         if let Some(event) = line {
+            let sw = Stopwatch::start_new();
             let new_id = id_mapping.get(&event.id);
 
             if new_id.is_none() {
@@ -60,6 +57,8 @@ async fn handle_event(mut rx: UnboundedReceiver<BidAsk>, sessions: Arc<SessionLi
             let mut data_to_send = str.as_bytes().to_vec();
             data_to_send.extend_from_slice(&MESSAGE_SPLITTER);
             sessions.send_to_all(data_to_send).await;
+            metrics.quote_process_time_sm.with_label_values(&[&new_id.unwrap()]).inc_by(sw.elapsed_ms() as f64);
+            metrics.quote_process_time_sm_count.with_label_values(&[&new_id.unwrap()]).inc();
         } else {
             println!("Some how we did not get the log line");
             tokio::time::sleep(Duration::from_millis(100)).await;
