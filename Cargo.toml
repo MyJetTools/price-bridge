@@ -6,6 +6,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = {version = "0.1.51"}
 tungstenite = { version = "0.15.0", features = ["native-tls"] }
 futures-util = "0.3.17"
 futures = "0.3.17"

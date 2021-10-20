@@ -1,10 +1,12 @@
 use crate::websocket_core::{BaseContext, BidAsk};
 use chrono::{DateTime, NaiveDateTime, Utc};
+use futures::stream::SplitSink;
 use serde_json::Value;
+use tokio::net::TcpStream;
 use std::collections::HashMap;
 use substring::Substring;
-use tokio_tungstenite::tungstenite::Message;
-
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, tungstenite::Message};
+use async_trait::async_trait;
 use super::{
     contracts::{
         OrderBookEvent, OrderBookSnapshotEvent, RootOrderBookEvent, RootOrderBookSnapshotEvent,
@@ -37,7 +39,14 @@ impl KrakenExchangeContext {
     }
 }
 
+#[async_trait]
 impl BaseContext for KrakenExchangeContext {
+
+    async fn subscribe_if_needed(&self, sink: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>) -> Result<(), ()>
+    {
+        return Ok(());
+    }
+
     fn get_link_to_connect(&self) -> String {
         let symbols: Vec<String> = self
             .instruments

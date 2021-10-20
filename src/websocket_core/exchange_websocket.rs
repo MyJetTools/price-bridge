@@ -1,5 +1,5 @@
 use std::{collections::HashMap, sync::{Arc, atomic::{AtomicBool, Ordering}}};
-use futures::StreamExt;
+use futures::{SinkExt, StreamExt, Sink};
 
 use prometheus::{core::{AtomicF64, GenericCounter}};
 use stopwatch::Stopwatch;
@@ -41,6 +41,7 @@ impl<T: BaseContext> ExchangeWebscoket<T> {
             metrics.is_connected.inc();
             let sw = Stopwatch::start_new();
             let (ws_stream, _) = connect_async(&url_to_connect).await.unwrap();
+            let (mut sink, mut stream) = ws_stream.split();
 
             let (sink, mut stream) = ws_stream.split();
             
@@ -48,6 +49,7 @@ impl<T: BaseContext> ExchangeWebscoket<T> {
             self.ctx.on_connect(message_sender).await;
             
             let mut instrument_metrics: HashMap<String, GenericCounter<AtomicF64>> = HashMap::new();
+
 
             loop {
                 let message = stream.next().await.unwrap();
