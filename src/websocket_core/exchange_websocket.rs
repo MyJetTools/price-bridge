@@ -41,7 +41,7 @@ impl<T: BaseContext> ExchangeWebscoket<T> {
             metrics.is_connected.inc();
             let sw = Stopwatch::start_new();
             let (ws_stream, _) = connect_async(&url_to_connect).await.unwrap();
-            let (mut sink, mut stream) = ws_stream.split();
+            let (sink, mut stream) = ws_stream.split();
 
             let (sink, mut stream) = ws_stream.split();
             
