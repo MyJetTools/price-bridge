@@ -18,7 +18,7 @@ async fn main() {
     let server_sessions_list = Arc::new(SessionList::new());
 
     if settings.target_exchange == "ftx" {
-        let mut binance_socket = ExchangeWebscoket::new(BinanceExchangeContext::new_by_settings(&settings));
+        let mut binance_socket = ExchangeWebscoket::new(FtxExchangeContext::new_by_settings(&settings));
 
         let handler = binance_socket.get_subscribe();
 
@@ -39,7 +39,7 @@ async fn main() {
         ));
         tokio::spawn(binance_socket.start(metrics.clone()));
     } else {
-        let mut ftx_socket = ExchangeWebscoket::new(FtxExchangeContext::new_by_settings(&settings));
+        let mut ftx_socket = ExchangeWebscoket::new(BinanceExchangeContext::new_by_settings(&settings));
 
         let handler = ftx_socket.get_subscribe();
 
