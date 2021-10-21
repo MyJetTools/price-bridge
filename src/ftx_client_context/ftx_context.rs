@@ -56,18 +56,28 @@ impl BaseContext for FtxExchangeContext {
             Err(err) => panic!("Cant serialize message to object.  Message: {}. Error: {}", message.to_string(), err)
         };
 
-        let data = obj.get("data");
+        let data = obj.get("type");
 
         if data.is_none() {
-            println!("Not found data field in obj.  Message: {}.", message.to_string());
+            println!("No type field. Skipp message. Message: {}", json_mess);
             return None;
         }
 
+        if data.unwrap().to_string() != "update" {
+            println!("Field is not update. Skipp message. Message: {}", json_mess);
+            return None;
+        }
+// 
+        // if data.is_none() {
+        //     println!("Not found data field in obj.  Message: {}.", message.to_string());
+        //     return None;
+        // }
+
         let socket_event: FtxTickerMessage = {
-            let parsed_json = serde_json::from_str(&data.unwrap().to_string());
+            let parsed_json = serde_json::from_str(&obj.to_string());
             match parsed_json {
                 Ok(t) => t,
-                Err(err) => panic!("Cant serialize json to FtxTickerMessage. Json: {}. Error: {}", data.unwrap().to_string(), err),
+                Err(err) => panic!("Cant serialize json to FtxTickerMessage. Json: {}. Error: {}", obj.to_string(), err),
             }
         };
 
