@@ -1,9 +1,9 @@
-use std::collections::{BTreeMap, HashMap, btree_map};
+use std::collections::{btree_map, BTreeMap, HashMap};
 
-use super::{
-    RootOrderBookEvent, 
-    RootOrderBookSnapshotEvent,
-    contracts::{WsBidsAsks, WsBidsAsksSnapshot, WsBidAskSnapshotContainer, OrderBookEvent, WsBidAskContainer}};
+use super::contracts::{
+    OrderBookEvent, OrderBookSnapshotEvent, WsBidAskContainer, WsBidAskSnapshotContainer,
+    WsBidsAsks, WsBidsAsksSnapshot,
+};
 use crate::BidAsk;
 
 #[derive(Clone, Debug)]
@@ -16,45 +16,19 @@ pub struct KrakenOrderBook {
 }
 
 impl KrakenOrderBook {
-    pub fn new(message: &RootOrderBookSnapshotEvent) -> KrakenOrderBook {
-        let first = message.bid_asks.first();
-
-        match first {
-            Some(val) => {
-
-                match message.bid_asks.first() {
-                    Some(order_book) => {
-                        return KrakenOrderBook {
-                            instrument: val.pair.to_uppercase(),
-                            //date: val.,
-                            date: 0,
-                            last_id: 0,
-                            bids: bid_ask_to_btree_map(&order_book.bid_ask.bs_vec),
-                            asks: bid_ask_to_btree_map(&order_book.bid_ask.as_vec),
-                        }
-                    },
-                    None => {
-                        panic!("No updates in message");        
-                    }
-                };
-            }
-            None => {
-                panic!("Message is empty");
-            } 
+    pub fn new(message: &OrderBookSnapshotEvent) -> KrakenOrderBook {
+        return KrakenOrderBook {
+            instrument: message.pair.to_uppercase(),
+            //date: val.,
+            date: 0,
+            last_id: 0,
+            bids: bid_ask_to_btree_map(&message.bid_ask.bs_vec),
+            asks: bid_ask_to_btree_map(&message.bid_ask.as_vec),
         };
     }
 
-    pub fn is_valid(&self, socket_book: &RootOrderBookEvent) -> bool {
-        let first = socket_book.bid_asks.first();
-
-        match first {
-            Some(val) => {
-                return true;
-            }
-            None =>{
-                return false;
-            }
-        };
+    pub fn is_valid(&self, socket_book: &OrderBookEvent) -> bool {
+        return true;
 
         /* if //socket_book.first_update_id == &self.last_id + 1
             //|| (socket_book.first_update_id <= self.last_id
@@ -68,10 +42,8 @@ impl KrakenOrderBook {
         return false; */
     }
 
-    pub fn process_bids_and_asks(&mut self, socket_message: &RootOrderBookEvent) {
-        let event = &socket_message.bid_asks.first()
-        .unwrap();
-        let container = &event.bid_ask;
+    pub fn process_bids_and_asks(&mut self, socket_message: &OrderBookEvent) {
+        let container = &socket_message.bid_ask;
         for tick in &container.as_vec {
             let price = tick.price.clone();
             let volume = tick.qty.parse::<f64>().unwrap();
@@ -105,16 +77,14 @@ impl KrakenOrderBook {
             return None;
         }
 
-        let mut ask_price: f64 = 0.0; 
-        for pair in self.asks.iter()
-        {
+        let mut ask_price: f64 = 0.0;
+        for pair in self.asks.iter() {
             ask_price = pair.0.parse::<f64>().unwrap();
             break;
         }
 
-        let mut bid_price: f64 = 0.0; 
-        for pair in self.bids.iter().rev()
-        {
+        let mut bid_price: f64 = 0.0;
+        for pair in self.bids.iter().rev() {
             bid_price = pair.0.parse::<f64>().unwrap();
             break;
         }
@@ -131,9 +101,13 @@ impl KrakenOrderBook {
 pub fn bid_ask_to_btree_map(bidasks: &Vec<WsBidsAsksSnapshot>) -> BTreeMap<String, (f64, f64)> {
     let mut btree_map = BTreeMap::new();
     for bidask in bidasks {
-        btree_map.insert(bidask.price.clone(), 
-        (bidask.qty.parse::<f64>().unwrap(), 
-        bidask.time.parse::<f64>().unwrap()));
+        btree_map.insert(
+            bidask.price.clone(),
+            (
+                bidask.qty.parse::<f64>().unwrap(),
+                bidask.time.parse::<f64>().unwrap(),
+            ),
+        );
     }
 
     return btree_map;
@@ -151,46 +125,38 @@ mod tests {
     fn test_orderbook_best_price() {
         let date = Utc::now().timestamp_millis();
 
-        let ws_socket_event1 = RootOrderBookSnapshotEvent {
-            bid_asks: vec![OrderBookSnapshotEvent{
-                bid_ask: WsBidAskSnapshotContainer {
-                    as_vec: vec![WsBidsAsksSnapshot { 
-                        price: "1.0".into(),
-                        qty: "1.0".into(),
-                        time: "1.0".into()
-                     }],
-                    bs_vec: vec![WsBidsAsksSnapshot { 
-                        price: "0.9".into(),
-                        qty: "1.0".into(),
-                        time: "1.0".into()
-                     }],
-                },
-                channel_id: 321,
-                channel_name: "sub1".into(),
-                pair: "XBT/USD".into()
-            }]
+        let ws_socket_event1 = OrderBookSnapshotEvent {
+            bid_ask: WsBidAskSnapshotContainer {
+                as_vec: vec![WsBidsAsksSnapshot {
+                    price: "1.0".into(),
+                    qty: "1.0".into(),
+                    time: "1.0".into(),
+                }],
+                bs_vec: vec![WsBidsAsksSnapshot {
+                    price: "0.9".into(),
+                    qty: "1.0".into(),
+                    time: "1.0".into(),
+                }],
+            },
+            pair: "XBT/USD".into(),
         };
 
-        let ws_socket_event2 = RootOrderBookEvent {
-            bid_asks: vec![OrderBookEvent{
-                bid_ask: WsBidAskContainer {
-                    as_vec: vec![WsBidsAsks { 
-                        price: "0.95".into(),
-                        qty: "1.0".into(),
-                        time: "1.0".into(),
-                        republished: "".into(),
-                     }],
-                    bs_vec: vec![WsBidsAsks { 
-                        price: "0.94".into(),
-                        qty: "1.0".into(),
-                        time: "1.0".into(),
-                        republished: "".into(),
-                     }],
-                },
-                channel_id: 321,
-                channel_name: "sub1".into(),
-                pair: "XBT/USD".into()
-            }]
+        let ws_socket_event2 = OrderBookEvent {
+            bid_ask: WsBidAskContainer {
+                as_vec: vec![WsBidsAsks {
+                    price: "0.95".into(),
+                    qty: "1.0".into(),
+                    time: "1.0".into(),
+                    republished: "".into(),
+                }],
+                bs_vec: vec![WsBidsAsks {
+                    price: "0.94".into(),
+                    qty: "1.0".into(),
+                    time: "1.0".into(),
+                    republished: "".into(),
+                }],
+            },
+            pair: "XBT/USD".into(),
         };
 
         let mut orderbook = KrakenOrderBook::new(&ws_socket_event1);

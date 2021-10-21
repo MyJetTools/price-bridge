@@ -1,9 +1,12 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
-
+use chrono::NaiveDateTime;
+use chrono::DateTime;
+use chrono::Utc;
 use binance_quote_bridge::{
     BaseContext, 
     BidAsk,
     BinanceExchangeContext, 
+    KrakenExchangeContext,
     ExchangeWebscoket, 
     Metrics, 
     SessionList,
@@ -21,6 +24,13 @@ async fn main() {
     let metrics = Arc::new(Metrics::new());
     let settings = parse_settings().await;
     let server_sessions_list = Arc::new(SessionList::new());
+    let mut socket = ExchangeWebscoket::new(KrakenExchangeContext::new(
+        settings
+            .instruments_mapping
+            .keys()
+            .cloned()
+            .collect::<Vec<String>>(),
+    ));
 
     if settings.target_exchange == "ftx" {
         let mut binance_socket = ExchangeWebscoket::new(FtxExchangeContext::new_by_settings(&settings));

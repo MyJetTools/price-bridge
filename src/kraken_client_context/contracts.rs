@@ -8,29 +8,17 @@ pub struct WsBidsAsksSnapshot {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct WsBidAskSnapshotContainer {
-    #[serde(rename = "as")]
     pub as_vec: Vec<WsBidsAsksSnapshot>,
 
-    #[serde(rename = "bs")]
     pub bs_vec: Vec<WsBidsAsksSnapshot>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OrderBookSnapshotEvent {
-    pub channel_id: i64,
-
     pub bid_ask: WsBidAskSnapshotContainer,
 
-    pub channel_name: String,
-
     pub pair: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RootOrderBookSnapshotEvent {
-    pub bid_asks: Vec<OrderBookSnapshotEvent>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -53,18 +41,9 @@ pub struct WsBidAskContainer {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OrderBookEvent {
-    pub channel_id: i64,
-
     pub bid_ask: WsBidAskContainer,
 
-    pub channel_name: String,
-
     pub pair: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RootOrderBookEvent {
-    pub bid_asks: Vec<OrderBookEvent>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -48,11 +48,6 @@ impl BinanceExchangeContext {
 #[async_trait]
 impl BaseContext for BinanceExchangeContext {
 
-    async fn subscribe_if_needed(&self, sink: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>) -> Result<(), ()>
-    {
-        return Ok(());
-    }
-
     fn get_link_to_connect(&self) -> String {
         let symbols: Vec<String> = self
             .instruments

@@ -42,9 +42,6 @@ impl<T: BaseContext> ExchangeWebscoket<T> {
             let sw = Stopwatch::start_new();
             let (ws_stream, _) = connect_async(&url_to_connect).await.unwrap();
             let (sink, mut stream) = ws_stream.split();
-
-            let (sink, mut stream) = ws_stream.split();
-            
             let message_sender = Arc::new(WsMessageWriter::new(sink));
             self.ctx.on_connect(message_sender).await;
             
