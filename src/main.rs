@@ -1,7 +1,9 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 
-use binance_quote_bridge::{BaseContext, BidAsk, BinanceExchangeContext, ExchangeWebscoket, Metrics, SessionList, Settings, http_start, start};
+use binance_quote_bridge::{BidAsk, BinanceExchangeContext, ExchangeWebscoket, Metrics, SessionList, Settings, http_start, start};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use stopwatch::Stopwatch;
+use substring::Substring;
 use tokio::{fs, sync::{mpsc::UnboundedReceiver}};
 
 const MESSAGE_SPLITTER: [u8; 2] = [13, 10];
@@ -44,7 +46,7 @@ async fn handle_event(mut rx: UnboundedReceiver<BidAsk>, sessions: Arc<SessionLi
                 continue;
             }
 
-            let date = BinanceExchangeContext::parse_date(event.date.to_string());
+            let date = parse_timestamp_to_date(event.date.to_string());
 
             let str = format!(
                 "{} {} {} {}",
@@ -70,4 +72,12 @@ async fn parse_settings() -> Settings {
     let content = fs::read_to_string("./settings.json").await.unwrap();
     let parsed_json: Settings = serde_json::from_str(&content).unwrap();
     return parsed_json;
+}
+
+fn parse_timestamp_to_date(timestamp: String) -> String {
+
+    let nanoseconds = timestamp.substring(10, 14).parse::<u32>().unwrap() * 1000000;
+    let timestamp = timestamp.substring(0, 10).parse::<i64>().unwrap();
+    let datetime = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, nanoseconds), Utc);
+    return datetime.format("%Y%m%d%H%M%S%3f").to_string();
 }

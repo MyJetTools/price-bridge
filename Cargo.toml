@@ -20,6 +20,8 @@ substring = "1.4.5"
 prometheus = { version = "0.13.0"}
 stopwatch = "0.0.7"
 hyper = { version = "0.14", features = ["full"] }
+async-trait = {version = "0.1.51"}
+
 
 
 [features]

@@ -1,12 +1,10 @@
 use std::collections::{HashMap};
 use crate::websocket_core::{BaseContext, BidAsk};
-use chrono::{DateTime, NaiveDateTime, Utc};
 use serde_json::Value;
 use tokio_tungstenite::tungstenite::Message;
-use substring::{Substring};
+use async_trait::async_trait;
 
-
-use super::{BinanceOrderBook, DepthOrderBookEvent};
+use super::{BinanceOrderBook, BinanceDepthOrderBookEvent};
 
 pub struct BinanceExchangeContext {
     pub instruments: Vec<String>,
@@ -23,13 +21,13 @@ impl BinanceExchangeContext {
         };
     }
 
-    fn make_new_orderbook(&mut self, message: &DepthOrderBookEvent){
+    fn make_new_orderbook(&mut self, message: &BinanceDepthOrderBookEvent){
         let new_order_book = BinanceOrderBook::new(message);
         self.orderbooks.insert(message.symbol.clone(), new_order_book);
     }
 }
 
-
+#[async_trait]
 impl BaseContext for BinanceExchangeContext {
     fn get_link_to_connect(&self) -> String {
         let symbols: Vec<String> = self
@@ -67,7 +65,7 @@ impl BaseContext for BinanceExchangeContext {
             return None;
         }
 
-        let socket_event: DepthOrderBookEvent = {
+        let socket_event: BinanceDepthOrderBookEvent = {
             let parsed_json = serde_json::from_str(&data.unwrap().to_string());
             match parsed_json {
                 Ok(t) => t,
@@ -92,11 +90,8 @@ impl BaseContext for BinanceExchangeContext {
         return book.get_best_price();
     }
 
-    fn parse_date(timestamp: String) -> String {
-
-        let nanoseconds = timestamp.substring(10, 14).parse::<u32>().unwrap() * 1000000;
-        let timestamp = timestamp.substring(0, 10).parse::<i64>().unwrap();
-        let datetime = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, nanoseconds), Utc);
-        return datetime.format("%Y%m%d%H%M%S%3f").to_string();
+    async fn on_connect(&self, _: std::sync::Arc<crate::websocket_core::WsMessageWriter>) {
+        todo!()
     }
+
 }

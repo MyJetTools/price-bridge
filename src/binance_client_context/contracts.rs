@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct WsBidsAsks {
+pub struct BinanceWsBidsAsks {
     pub price: String,
     pub qty: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct DepthOrderBookEvent {
+pub struct BinanceDepthOrderBookEvent {
     #[serde(rename = "e")]
     pub event_type: String,
 
@@ -29,8 +29,8 @@ pub struct DepthOrderBookEvent {
     pub previous_final_update_id: Option<u64>,
 
     #[serde(rename = "b")]
-    pub bids: Vec<WsBidsAsks>,
+    pub bids: Vec<BinanceWsBidsAsks>,
 
     #[serde(rename = "a")]
-    pub asks: Vec<WsBidsAsks>
+    pub asks: Vec<BinanceWsBidsAsks>
 }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{contracts::WsBidsAsks, DepthOrderBookEvent};
+use super::{contracts::BinanceWsBidsAsks, BinanceDepthOrderBookEvent};
 use crate::BidAsk;
 
 #[derive(Clone, Debug)]
@@ -9,11 +9,11 @@ pub struct BinanceOrderBook {
     pub date: i64,
     pub last_id: u128,
     pub bids: HashMap<String, f64>,
-    pub asks: HashMap<String, f64>,
+    pub asks: HashMap<String, f64>
 }
 
 impl BinanceOrderBook {
-    pub fn new(message: &DepthOrderBookEvent) -> BinanceOrderBook {
+    pub fn new(message: &BinanceDepthOrderBookEvent) -> BinanceOrderBook {
         BinanceOrderBook {
             instrument: message.symbol.to_uppercase(),
             date: message.event_time,
@@ -23,7 +23,7 @@ impl BinanceOrderBook {
         }
     }
 
-    pub fn is_valid(&self, socket_book: &DepthOrderBookEvent) -> bool {
+    pub fn is_valid(&self, socket_book: &BinanceDepthOrderBookEvent) -> bool {
         if socket_book.first_update_id == &self.last_id + 1
             || (socket_book.first_update_id <= self.last_id
                 && self.last_id <= socket_book.final_update_id)
@@ -36,7 +36,7 @@ impl BinanceOrderBook {
         return false;
     }
 
-    pub fn process_bids_and_asks(&mut self, socket_message: &DepthOrderBookEvent) {
+    pub fn process_bids_and_asks(&mut self, socket_message: &BinanceDepthOrderBookEvent) {
         for tick in &socket_message.asks {
             let price = tick.price.clone();
             let volume = tick.qty.parse::<f64>().unwrap();
@@ -94,7 +94,7 @@ impl BinanceOrderBook {
     }
 }
 
-pub fn bid_ask_to_hash_map(bidasks: &Vec<WsBidsAsks>) -> HashMap<String, f64> {
+pub fn bid_ask_to_hash_map(bidasks: &Vec<BinanceWsBidsAsks>) -> HashMap<String, f64> {
     let mut hashmap = HashMap::new();
     for bidask in bidasks {
         hashmap.insert(bidask.price.clone(), bidask.qty.parse::<f64>().unwrap());
@@ -113,7 +113,7 @@ mod tests {
     fn test_orderbook_best_price() {
         let date = Utc::now().timestamp_millis();
 
-        let ws_socket_event1 = DepthOrderBookEvent {
+        let ws_socket_event1 = BinanceDepthOrderBookEvent {
             event_type: "test".into(),
             event_time: date,
             symbol: "BTCUSD".into(),
@@ -121,28 +121,28 @@ mod tests {
             final_update_id: 1,
             previous_final_update_id: None,
             bids: vec![
-                WsBidsAsks {
+                BinanceWsBidsAsks {
                     price: "5.55".into(),
                     qty: "22.55".into(),
                 },
-                WsBidsAsks {
+                BinanceWsBidsAsks {
                     price: "4.52".into(),
                     qty: "21.55".into(),
                 },
             ],
             asks: vec![
-                WsBidsAsks {
+                BinanceWsBidsAsks {
                     price: "2.55".into(),
                     qty: "19.55".into(),
                 },
-                WsBidsAsks {
+                BinanceWsBidsAsks {
                     price: "3.52".into(),
                     qty: "51.55".into(),
                 },
             ],
         };
 
-        let ws_socket_event2 = DepthOrderBookEvent {
+        let ws_socket_event2 = BinanceDepthOrderBookEvent {
             event_type: "test".into(),
             event_time: date + 100,
             symbol: "BTCUSD".into(),
@@ -150,21 +150,21 @@ mod tests {
             final_update_id: 2,
             previous_final_update_id: None,
             bids: vec![
-                WsBidsAsks {
+                BinanceWsBidsAsks {
                     price: "6.55".into(),
                     qty: "26.55".into(),
                 },
-                WsBidsAsks {
+                BinanceWsBidsAsks {
                     price: "48.52".into(),
                     qty: "1.55".into(),
                 },
             ],
             asks: vec![
-                WsBidsAsks {
+                BinanceWsBidsAsks {
                     price: "76.55".into(),
                     qty: "21.55".into(),
                 },
-                WsBidsAsks {
+                BinanceWsBidsAsks {
                     price: "512.52".into(),
                     qty: "45.55".into(),
                 },

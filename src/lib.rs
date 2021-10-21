@@ -1,4 +1,5 @@
 mod binance_client_context;
+mod ftx_client_context;
 mod websocket_core;
 mod settings;
 mod tcp;

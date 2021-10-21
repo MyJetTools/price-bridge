@@ -6,7 +6,7 @@ use stopwatch::Stopwatch;
 use tokio::{sync::mpsc::{UnboundedReceiver, UnboundedSender},};
 use tokio_tungstenite::{connect_async};
 
-use crate::Metrics;
+use crate::{Metrics, websocket_core::WsMessageWriter};
 
 use super::{BaseContext, BidAsk};
 
@@ -40,12 +40,17 @@ impl<T: BaseContext> ExchangeWebscoket<T> {
         while self.is_running.load(Ordering::Relaxed) {
             metrics.is_connected.inc();
             let sw = Stopwatch::start_new();
-            let (mut ws_stream, _) = connect_async(&url_to_connect).await.unwrap();
+            let (ws_stream, _) = connect_async(&url_to_connect).await.unwrap();
 
+            let (sink, mut stream) = ws_stream.split();
+            
+            let message_sender = Arc::new(WsMessageWriter::new(sink));
+            self.ctx.on_connect(message_sender).await;
+            
             let mut instrument_metrics: HashMap<String, GenericCounter<AtomicF64>> = HashMap::new();
 
             loop {
-                let message = ws_stream.next().await.unwrap();
+                let message = stream.next().await.unwrap();
 
                 if message.is_err() {
                     metrics.is_connected.dec();
