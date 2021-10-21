@@ -1,10 +1,13 @@
-use std::collections::{HashMap};
-use crate::websocket_core::{BaseContext, BidAsk};
-use serde_json::Value;
-use tokio_tungstenite::tungstenite::Message;
+use crate::{
+    websocket_core::{BaseContext, BidAsk},
+    Settings,
+};
 use async_trait::async_trait;
+use serde_json::Value;
+use std::collections::HashMap;
+use tokio_tungstenite::tungstenite::Message;
 
-use super::{BinanceOrderBook, BinanceDepthOrderBookEvent};
+use super::{BinanceDepthOrderBookEvent, BinanceOrderBook};
 
 pub struct BinanceExchangeContext {
     pub instruments: Vec<String>,
@@ -21,9 +24,22 @@ impl BinanceExchangeContext {
         };
     }
 
-    fn make_new_orderbook(&mut self, message: &BinanceDepthOrderBookEvent){
+    pub fn new_by_settings(settings: &Settings) -> BinanceExchangeContext {
+        return BinanceExchangeContext {
+            base_url: "wss://stream.binance.com:9443/stream?streams".to_string(),
+            instruments: settings
+                .instruments_mapping
+                .keys()
+                .cloned()
+                .collect::<Vec<String>>(),
+            orderbooks: HashMap::new(),
+        };
+    }
+
+    fn make_new_orderbook(&mut self, message: &BinanceDepthOrderBookEvent) {
         let new_order_book = BinanceOrderBook::new(message);
-        self.orderbooks.insert(message.symbol.clone(), new_order_book);
+        self.orderbooks
+            .insert(message.symbol.clone(), new_order_book);
     }
 }
 
@@ -47,21 +63,31 @@ impl BaseContext for BinanceExchangeContext {
     }
 
     fn handle_message_and_get_bid_ask(&mut self, message: Message) -> Option<BidAsk> {
-
         let json_mess = match message.to_text() {
             Ok(str) => str,
-            Err(err) => panic!("Cant serialize message to text.  Message: {}. Error: {}", message.to_string(), err)
+            Err(err) => panic!(
+                "Cant serialize message to text.  Message: {}. Error: {}",
+                message.to_string(),
+                err
+            ),
         };
 
-        let obj : Value = match serde_json::from_str(json_mess) {
+        let obj: Value = match serde_json::from_str(json_mess) {
             Ok(object) => object,
-            Err(err) => panic!("Cant serialize message to object.  Message: {}. Error: {}", message.to_string(), err)
+            Err(err) => panic!(
+                "Cant serialize message to object.  Message: {}. Error: {}",
+                message.to_string(),
+                err
+            ),
         };
 
         let data = obj.get("data");
 
         if data.is_none() {
-            println!("Not found data field in obj.  Message: {}.", message.to_string());
+            println!(
+                "Not found data field in obj.  Message: {}.",
+                message.to_string()
+            );
             return None;
         }
 
@@ -69,7 +95,11 @@ impl BaseContext for BinanceExchangeContext {
             let parsed_json = serde_json::from_str(&data.unwrap().to_string());
             match parsed_json {
                 Ok(t) => t,
-                Err(err) => panic!("Cant serialize json to DepthOrderBookEvent. Json: {}. Error: {}", data.unwrap().to_string(), err),
+                Err(err) => panic!(
+                    "Cant serialize json to DepthOrderBookEvent. Json: {}. Error: {}",
+                    data.unwrap().to_string(),
+                    err
+                ),
             }
         };
 
@@ -86,12 +116,11 @@ impl BaseContext for BinanceExchangeContext {
         if book.is_valid(&socket_event) {
             book.process_bids_and_asks(&socket_event);
         }
-        
+
         return book.get_best_price();
     }
 
     async fn on_connect(&self, _: std::sync::Arc<crate::websocket_core::WsMessageWriter>) {
         todo!()
     }
-
 }

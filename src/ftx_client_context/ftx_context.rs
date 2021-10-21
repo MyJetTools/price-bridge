@@ -4,7 +4,7 @@ use chrono::NaiveDateTime;
 use serde_json::Value;
 use tokio_tungstenite::tungstenite::Message;
 
-use crate::{BaseContext, BidAsk};
+use crate::{BaseContext, BidAsk, Settings};
 use async_trait::async_trait;
 
 
@@ -14,6 +14,29 @@ pub struct FtxExchangeContext {
     pub instruments: Vec<String>,
     pub base_url: String,
     pub last_bid_ask: HashMap<String, FtxTickerMessage>,
+}
+
+impl FtxExchangeContext {
+    pub fn new(instruments: Vec<String>) -> FtxExchangeContext {
+        return FtxExchangeContext {
+            base_url: "wss://ftx.com/ws/".to_string(),
+            instruments: instruments,
+            last_bid_ask: HashMap::new(),
+        };
+    }
+
+    pub fn new_by_settings(settings: &Settings) -> FtxExchangeContext {
+        return FtxExchangeContext {
+            base_url: "wss://ftx.com/ws/".to_string(),
+            instruments: settings
+                .instruments_mapping
+                .keys()
+                .cloned()
+                .collect::<Vec<String>>(),
+            last_bid_ask: HashMap::new(),
+        };
+    }
+
 }
 
 #[async_trait]

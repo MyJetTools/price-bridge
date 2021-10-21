@@ -6,5 +6,8 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     #[serde(rename = "mapping")]
-    pub instruments_mapping: HashMap<String, String>
+    pub instruments_mapping: HashMap<String, String>,
+
+    #[serde(rename = "target_exchange")]
+    pub target_exchange: String
 }
