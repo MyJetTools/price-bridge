@@ -2,7 +2,6 @@ use crate::{
     websocket_core::{BaseContext, BidAsk},
     Settings,
 };
-use async_trait::async_trait;
 use futures::stream::SplitSink;
 use serde_json::Value;
 use std::collections::HashMap;

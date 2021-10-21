@@ -7,6 +7,7 @@ use binance_quote_bridge::{
     BidAsk,
     BinanceExchangeContext, 
     KrakenExchangeContext,
+    FtxExchangeContext,
     ExchangeWebscoket, 
     Metrics, 
     SessionList,
