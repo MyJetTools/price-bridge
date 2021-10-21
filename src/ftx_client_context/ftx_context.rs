@@ -36,7 +36,6 @@ impl FtxExchangeContext {
             last_bid_ask: HashMap::new(),
         };
     }
-
 }
 
 #[async_trait]
@@ -55,19 +54,22 @@ impl BaseContext for FtxExchangeContext {
             Ok(object) => object,
             Err(err) => panic!("Cant serialize message to object.  Message: {}. Error: {}", message.to_string(), err)
         };
+        
+        let mess_type = obj.get("type");
 
-        let data = obj.get("type");
-
-        if data.is_none() {
-            println!("No type field. Skipp message. Message: {}", json_mess);
+        if mess_type.is_none() {
+            println!("No type field. Skip message. Message: {}", json_mess);
             return None;
         }
 
-        if data.unwrap().to_string() != "update" {
-            println!("Field is not update. Skipp message. Message: {}", json_mess);
+        println!("{}", mess_type.unwrap().to_string() != "update");
+        println!("{}", mess_type.unwrap().to_string());
+
+        if mess_type.unwrap().to_string() != "update" {
+            println!("Field is not update. Skip message. Message: {}", json_mess);
             return None;
         }
-// 
+        
         // if data.is_none() {
         //     println!("Not found data field in obj.  Message: {}.", message.to_string());
         //     return None;
