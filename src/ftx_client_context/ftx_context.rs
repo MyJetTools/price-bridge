@@ -1,6 +1,5 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
 
-use chrono::NaiveDateTime;
 use serde_json::Value;
 use tokio_tungstenite::tungstenite::Message;
 
@@ -62,10 +61,7 @@ impl BaseContext for FtxExchangeContext {
             return None;
         }
 
-        println!("{}", mess_type.unwrap().to_string() != "update");
-        println!("{}", mess_type.unwrap().to_string());
-
-        if mess_type.unwrap().to_string() != "update" {
+        if mess_type.unwrap().to_string() != "\"update\"" {
             println!("Field is not update. Skip message. Message: {}", json_mess);
             return None;
         }
@@ -122,13 +118,10 @@ fn ticker_to_bid_ask(ticker: &FtxTickerMessage) -> BidAsk{
 }
 
 fn parse_date_to_timestamp(date: f64) -> i64{
-    let date_with_milisecond = date / 100.0;
+    let split_date = date.to_string();
+    let split_date = split_date.split(".");
+    let date_parts: Vec<&str> = split_date.collect();
+    let date_as_string = format!("{}{}", date_parts[0].to_string(), date_parts[1][..3].to_string());
 
-    let date_as_string = date_with_milisecond.to_string();
-
-    let date = NaiveDateTime::parse_from_str(&date_as_string, "%Y%m%d%H%M%S%5f").unwrap();
-
-    println!("{}", date.to_string());
-
-    return date.timestamp_millis();
+    return date_as_string.parse::<i64>().unwrap();
 }
