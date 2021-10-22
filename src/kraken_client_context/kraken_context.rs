@@ -2,6 +2,7 @@ use super::{
     contracts::{OrderBookEvent, OrderBookSnapshotEvent, SubscribeToKraken, SubscriptionKraken},
     KrakenOrderBook,
 };
+use crate::Settings;
 use crate::kraken_client_context::contracts::WsBidsAsksSnapshot;
 use crate::websocket_core::{BaseContext, BidAsk};
 use async_trait::async_trait;
@@ -30,6 +31,18 @@ impl KrakenExchangeContext {
         return KrakenExchangeContext {
             base_url: "wss://ws.kraken.com".to_string(),
             instruments: instruments,
+            orderbooks: HashMap::new(),
+        };
+    }
+
+    pub fn new_by_settings(settings: &Settings) -> KrakenExchangeContext {
+        return KrakenExchangeContext {
+            base_url: "wss://ws.kraken.com".to_string(),
+            instruments: settings
+                .instruments_mapping
+                .keys()
+                .cloned()
+                .collect::<Vec<String>>(),
             orderbooks: HashMap::new(),
         };
     }

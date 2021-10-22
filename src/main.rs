@@ -1,19 +1,11 @@
-use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
-use chrono::NaiveDateTime;
-use chrono::DateTime;
-use chrono::Utc;
 use binance_quote_bridge::{
-    BaseContext, 
-    BidAsk,
-    BinanceExchangeContext, 
-    KrakenExchangeContext,
-    FtxExchangeContext,
-    ExchangeWebscoket, 
-    Metrics, 
-    SessionList,
-    Settings,
-    http_start, 
-    start};
+    http_start, start, BaseContext, BidAsk, BinanceExchangeContext, ExchangeWebscoket,
+    FtxExchangeContext, KrakenExchangeContext, Metrics, SessionList, Settings,
+};
+use chrono::DateTime;
+use chrono::NaiveDateTime;
+use chrono::Utc;
+use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 use stopwatch::Stopwatch;
 use substring::Substring;
 use tokio::{fs, sync::mpsc::UnboundedReceiver};
@@ -33,49 +25,80 @@ async fn main() {
             .collect::<Vec<String>>(),
     ));
 
-    if settings.target_exchange == "ftx" {
-        let mut binance_socket = ExchangeWebscoket::new(FtxExchangeContext::new_by_settings(&settings));
+    match settings.target_exchange.as_str() {
+        "ftx" => {
+            let mut binance_socket =
+                ExchangeWebscoket::new(FtxExchangeContext::new_by_settings(&settings));
 
-        let handler = binance_socket.get_subscribe();
+            let handler = binance_socket.get_subscribe();
 
-        tokio::spawn(start(
-            SocketAddr::from(([0, 0, 0, 0], 8080)),
-            server_sessions_list.clone(),
-            metrics.clone(),
-        ));
-        tokio::spawn(http_start(
-            SocketAddr::from(([0, 0, 0, 0], 8081)),
-            metrics.clone(),
-        ));
-        tokio::spawn(handle_event(
-            handler,
-            server_sessions_list.clone(),
-            settings.instruments_mapping,
-            metrics.clone(),
-        ));
-        tokio::spawn(binance_socket.start(metrics.clone()));
-    } else {
-        let mut ftx_socket = ExchangeWebscoket::new(BinanceExchangeContext::new_by_settings(&settings));
+            tokio::spawn(start(
+                SocketAddr::from(([0, 0, 0, 0], 8080)),
+                server_sessions_list.clone(),
+                metrics.clone(),
+            ));
+            tokio::spawn(http_start(
+                SocketAddr::from(([0, 0, 0, 0], 8081)),
+                metrics.clone(),
+            ));
+            tokio::spawn(handle_event(
+                handler,
+                server_sessions_list.clone(),
+                settings.instruments_mapping,
+                metrics.clone(),
+            ));
+            tokio::spawn(binance_socket.start(metrics.clone()));
+        }
+        "binance" => {
+            let mut ftx_socket =
+                ExchangeWebscoket::new(BinanceExchangeContext::new_by_settings(&settings));
 
-        let handler = ftx_socket.get_subscribe();
+            let handler = ftx_socket.get_subscribe();
 
-        tokio::spawn(start(
-            SocketAddr::from(([0, 0, 0, 0], 8080)),
-            server_sessions_list.clone(),
-            metrics.clone(),
-        ));
-        tokio::spawn(http_start(
-            SocketAddr::from(([0, 0, 0, 0], 8081)),
-            metrics.clone(),
-        ));
-        tokio::spawn(handle_event(
-            handler,
-            server_sessions_list.clone(),
-            settings.instruments_mapping,
-            metrics.clone(),
-        ));
-        tokio::spawn(ftx_socket.start(metrics.clone()));
-    }
+            tokio::spawn(start(
+                SocketAddr::from(([0, 0, 0, 0], 8080)),
+                server_sessions_list.clone(),
+                metrics.clone(),
+            ));
+            tokio::spawn(http_start(
+                SocketAddr::from(([0, 0, 0, 0], 8081)),
+                metrics.clone(),
+            ));
+            tokio::spawn(handle_event(
+                handler,
+                server_sessions_list.clone(),
+                settings.instruments_mapping,
+                metrics.clone(),
+            ));
+            tokio::spawn(ftx_socket.start(metrics.clone()));
+        }
+        "kraken" => {
+            let mut kraken_socket =
+                ExchangeWebscoket::new(KrakenExchangeContext::new_by_settings(&settings));
+
+            let handler = kraken_socket.get_subscribe();
+
+            tokio::spawn(start(
+                SocketAddr::from(([0, 0, 0, 0], 8080)),
+                server_sessions_list.clone(),
+                metrics.clone(),
+            ));
+            tokio::spawn(http_start(
+                SocketAddr::from(([0, 0, 0, 0], 8081)),
+                metrics.clone(),
+            ));
+            tokio::spawn(handle_event(
+                handler,
+                server_sessions_list.clone(),
+                settings.instruments_mapping,
+                metrics.clone(),
+            ));
+            tokio::spawn(kraken_socket.start(metrics.clone()));
+        }
+        _ => {
+            panic!("Not supported exchange");
+        }
+    };
 
     loop {
         tokio::time::sleep(Duration::from_secs(5)).await;
