@@ -121,6 +121,10 @@ impl BaseContext for BinanceExchangeContext {
     }
 
     async fn on_connect(&self, _: std::sync::Arc<crate::websocket_core::WsMessageWriter>) {
-        todo!()
+        println!("we dont use on_connect for binance context");
+    }
+
+    fn get_lp_name(&self)->String {
+        return "binance".into();
     }
 }

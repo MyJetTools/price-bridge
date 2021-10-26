@@ -2,7 +2,7 @@ use std::{net::SocketAddr, sync::Arc};
 use tokio::{io::{self, AsyncReadExt, ReadHalf}, net::{TcpListener, TcpStream}};
 
 
-use crate::Metrics;
+use crate::MetricsStore;
 
 use super::{TcpServerSession, buff_reader::BufferReader, connection::handle_incoming_payload, sessions_list::SessionList};
 
@@ -11,7 +11,7 @@ pub type ConnectionId = u128;
 const MESSAGE_SPLITTER: [u8; 2] = [13, 10];
 
 
-pub async fn start(addr: SocketAddr, list: Arc<SessionList>, metrics: Arc<Metrics>) {
+pub async fn start(addr: SocketAddr, list: Arc<SessionList>, metrics: Arc<MetricsStore>) {
     let listener = TcpListener::bind(addr).await.unwrap();
 
     let mut socket_id: ConnectionId = 0;
@@ -29,7 +29,7 @@ pub async fn start(addr: SocketAddr, list: Arc<SessionList>, metrics: Arc<Metric
 
         let tcp_session = Arc::new(TcpServerSession::new(socket_id, write_socket));
         list.add_session(tcp_session.clone()).await;
-        metrics.tcp_server_clients_count.with_label_values(&[&socket_id.to_string()]).inc();
+        metrics.handle_connect_change_to_tcp(true, &"127.0.0.1".to_string());
 
         tokio::task::spawn(process_socket(reed_socket, tcp_session, list.clone(), metrics.clone()));
     }
@@ -39,7 +39,7 @@ pub async fn start(addr: SocketAddr, list: Arc<SessionList>, metrics: Arc<Metric
 async fn process_socket(
     read_socket: ReadHalf<TcpStream>,
     tcp_session: Arc<TcpServerSession>,
-    list: Arc<SessionList>, metrics: Arc<Metrics>
+    list: Arc<SessionList>, metrics: Arc<MetricsStore>
 ) {
     let socket_loop_result =
         tokio::task::spawn(socket_loop(read_socket, tcp_session.clone())).await;
@@ -50,7 +50,7 @@ async fn process_socket(
     } 
 
     list.remove_session(tcp_session.get_id()).await;
-    metrics.tcp_server_clients_count.with_label_values(&[&tcp_session.id.to_string()]).dec();
+    metrics.handle_connect_change_to_tcp(false, &"127.0.0.1".to_string());
 }
 
 
