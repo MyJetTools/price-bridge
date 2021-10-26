@@ -4,7 +4,7 @@ on:
     branches: [ main ]
 
 env:
-  IMAGE_NAME: myjettools/price-bridge
+  IMAGE_NAME: myjettools/price-mixer
 
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - name: Docker login
         env:
           DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASS: ${{ secrets.AZ_DOCKER_PASS }}
+          DOCKER_PASS: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           echo "$DOCKER_PASS" | docker login --username "$DOCKER_USER" --password-stdin   
       - name: Docker Build and Publish
