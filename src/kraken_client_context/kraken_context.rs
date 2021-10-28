@@ -336,4 +336,8 @@ impl BaseContext for KrakenExchangeContext {
         let message = Message::Text(serialized);
         message_writer.send_data(message).await;
     }
+
+    fn get_lp_name(&self)->String {
+        return "binance".into();
+    }
 }
