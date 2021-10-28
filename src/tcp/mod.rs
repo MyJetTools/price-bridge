@@ -5,6 +5,7 @@ mod connection;
 mod sessions_list;
 mod buff_reader;
 
+//pub use tcp_data_writer::TcpStream;
 pub use tcp_data_writer::TcpContextWriter;
 pub use tcp_data_session::TcpServerSession;
 pub use sessions_list::SessionList;

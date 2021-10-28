@@ -7,18 +7,18 @@ use tokio_tungstenite::MaybeTlsStream;
 use tokio::net::TcpStream;
 
 pub struct WsMessageWriter{
-    pub send_sing: RwLock<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>
+    pub send_sink: RwLock<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>
 }
 
 impl WsMessageWriter {
     pub fn new(send: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>) -> WsMessageWriter{
         WsMessageWriter{
-            send_sing: RwLock::new(send)
+            send_sink: RwLock::new(send)
         }
     }
 
     pub async fn send_data(&self, mess: Message){
-        let mut read_access = self.send_sing.write().await;
+        let mut read_access = self.send_sink.write().await;
         read_access.send(mess).await.expect("Cant send message to ws.");
     }
 }

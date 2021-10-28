@@ -34,3 +34,5 @@ pub struct BinanceDepthOrderBookEvent {
     #[serde(rename = "a")]
     pub asks: Vec<BinanceWsBidsAsks>
 }
+
+//[320,{"a":[["62203.20000","0.09848723","1634644467.091138"]],"c":"3471159483"},"book-10","XBT/USD"]

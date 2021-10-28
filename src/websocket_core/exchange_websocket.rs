@@ -1,5 +1,5 @@
 use std::{sync::{Arc, atomic::{AtomicBool, Ordering}}};
-use futures::StreamExt;
+use futures::{SinkExt, StreamExt, Sink};
 
 use tokio::{sync::mpsc::{UnboundedReceiver, UnboundedSender},};
 use tokio_tungstenite::{connect_async};
@@ -40,11 +40,11 @@ impl<T: BaseContext> ExchangeWebscoket<T> {
             metrics.handle_change_connect_to_lp(true, &self.ctx.get_lp_name());
 
             let (sink, mut stream) = ws_stream.split();
-            
             let message_sender = Arc::new(WsMessageWriter::new(sink));
 
             self.ctx.on_connect(message_sender).await;
             
+
 
             loop {
                 let message = stream.next().await.unwrap();

@@ -2,10 +2,11 @@ use crate::{
     websocket_core::{BaseContext, BidAsk},
     Settings,
 };
-use async_trait::async_trait;
+use futures::stream::SplitSink;
 use serde_json::Value;
 use std::collections::HashMap;
 use tokio_tungstenite::tungstenite::Message;
+use async_trait::async_trait;
 
 use super::{BinanceDepthOrderBookEvent, BinanceOrderBook};
 
@@ -45,6 +46,7 @@ impl BinanceExchangeContext {
 
 #[async_trait]
 impl BaseContext for BinanceExchangeContext {
+
     fn get_link_to_connect(&self) -> String {
         let symbols: Vec<String> = self
             .instruments
